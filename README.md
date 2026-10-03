@@ -257,3 +257,29 @@ target_uploads\
 ## Web-deployment note
 
 The application can be adapted for a small group of web testers, but the local v2.4 architecture is not yet the final multi-user deployment build. A production/shared version should add authentication, per-user data isolation, server-side secrets, HTTPS, persistent server storage, request limits, and concurrency controls for AI jobs.
+
+## License
+
+Copyright (C) 2026 elioli983
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the [LICENSE](LICENSE) file for the full text of the GNU General Public License v3.0.
+
+### Mapillary
+
+This project is not affiliated with, endorsed by, or sponsored by Mapillary or Meta. Mapillary imagery, metadata, APIs, MapillaryJS, and access tokens remain subject to [Mapillary's own terms](https://www.mapillary.com/terms), and imagery is licensed by Mapillary under its own terms (currently CC BY-SA 4.0). The GPL license of this project does not apply to, and grants no rights in, any Mapillary content or service. Each user must obtain their own Mapillary access token and is responsible for complying with Mapillary's terms, including attribution and API usage limits.
+
+### Third-party software and models
+
+This project's GPL license covers only the code in this repository. The third-party libraries and models it uses are not included in this repository; they are downloaded separately and remain subject to their own licenses, which are listed below as published by each project at the time of writing. Check each project for current terms.
+
+| Component | How it is used | License |
+|---|---|---|
+| [MapillaryJS](https://github.com/mapillary/mapillary-js) | Image viewer, loaded from a CDN | MIT |
+| [PyTorch](https://pytorch.org) / [torchvision](https://github.com/pytorch/vision) | AI inference | BSD-3-Clause |
+| [Hugging Face Transformers](https://github.com/huggingface/transformers) | Model loading | Apache-2.0 |
+| [safetensors](https://github.com/huggingface/safetensors) | Model weight format | Apache-2.0 |
+| [NumPy](https://numpy.org) | Numerical processing | BSD-3-Clause |
+| [Pillow](https://python-pillow.org) | Image decoding | MIT-CMU (HPND) |
+| [DINOv2 (`facebook/dinov2-small`)](https://huggingface.co/facebook/dinov2-small) | Visual-similarity model weights, downloaded on first use | Apache-2.0 |
