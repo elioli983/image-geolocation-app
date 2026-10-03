@@ -1,0 +1,41 @@
+IMAGE GEOLOCATION ESTIMATION APP v2.4
+UPGRADE FROM v2.3
+
+Recommended before upgrading:
+1. Stop serve.py (Ctrl+C).
+2. Make a backup copy of the current application folder, especially:
+   - mapillary_runs.sqlite3
+   - config.json
+   - target_uploads\
+   - ai_cache\
+
+OPTION A - UPDATE-ONLY ZIP (recommended for an existing v2.3 installation)
+1. Extract IGE_v2_4_Update_Only.zip.
+2. Copy its files into the existing v2.3 application folder.
+3. Allow Windows to replace the existing source/documentation files.
+4. The update-only package intentionally does NOT contain config.json,
+   mapillary_runs.sqlite3, target_uploads, or ai_cache. Your Mapillary token,
+   saved runs, Large Area jobs, shortlist, target images, and cached thumbnails
+   therefore remain in place.
+5. Start with: python .\serve.py
+6. The SQLite schema upgrades automatically on startup to add v2.4 AI metadata.
+
+OPTION B - CLEAN v2.4 ZIP
+1. Extract IGE_v2_4_Full.zip to a new folder.
+2. Configure the Mapillary token again, or copy config.json from the existing
+   installation into the new folder.
+3. To keep saved runs, shortlist, and Large Area jobs, copy mapillary_runs.sqlite3
+   only while serve.py is stopped.
+4. target_uploads and ai_cache may also be copied if desired.
+
+NEW IN v2.4
+- AI run start/end/elapsed time and persisted performance statistics.
+- Scrollable all-cell Large Area Search table with active-cell auto-scroll.
+- Post-discovery AI filter: Both / Panoramas only / Flat images only.
+- Candidate counts and zero-result protection for AI image-type filtering.
+- Selected AI image type persisted with AI scores.
+- Friendlier Large Area Search radius validation for <=1,500 m.
+- Browser/server target-image decode validation and clearer corrupt-image errors.
+
+This remains a proof of concept. Windows is the tested platform; Linux and
+macOS have not been tested.

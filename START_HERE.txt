@@ -1,0 +1,59 @@
+IMAGE GEOLOCATION ESTIMATION APP v2.4
+
+1. Configure the Mapillary token in PowerShell:
+
+   $env:MAPILLARY_ACCESS_TOKEN="MLY|YOUR_TOKEN_HERE"
+
+2. Install the optional AI components (once):
+
+   .\install_ai.ps1
+
+   or:
+
+   python -m pip install -r .\requirements-ai.txt
+
+   AMD Ryzen AI Halo / Ryzen AI Max users who want GPU acceleration should use
+   an AMD ROCm-enabled PyTorch build. The app will detect it as "AMD ROCm GPU".
+
+3. Start the application:
+
+   python .\serve.py
+
+4. Open http://localhost:8000/ if the browser does not open automatically.
+
+5. Choose a search mode:
+
+   STANDARD SEARCH
+   - Enter center latitude/longitude.
+   - Radius is limited to 1,500 meters.
+   - Click "Discover Mapillary images".
+
+   LARGE AREA SEARCH
+   - Enter center latitude/longitude and an overall radius from 1,501 to 50,000 m.
+   - The app creates overlapping 1,500 m cells and searches them sequentially.
+   - Progress is checkpointed after every cell.
+   - Pause/Cancel/Resume and Retry failed cells do not discard completed cells.
+   - Click "Load combined results" to use the deduplicated images in the normal reviewer/AI workflow.
+
+6. In Target photograph, browse to a JPEG/PNG/WebP image and click "Use selected target".
+
+7. Recommended AI workflow:
+   - Fast multi-crop / 1024 px / Auto / Maximum images = 0 / Keep cache checked
+   - Review high-ranking images and add promising images to the shortlist
+   - Load shortlist
+   - Run Thorough multi-crop
+
+"Sort by AI similarity" shows the highest-scoring result as #1.
+"Restore distance order" returns to nearest-to-farthest and shows #1.
+
+Saved runs, shortlist, and Large Area Search checkpoints: mapillary_runs.sqlite3
+Uploaded target: target_uploads\
+AI thumbnails: ai_cache\
+
+8. v2.4 AI and Large Area improvements:
+   - AI runs show start time, finish time, elapsed time, cache hits, and throughput.
+   - The Large Area Search cell table is fully scrollable after completion.
+   - AI Image Type can be set to Both, Panoramas only, or Flat images only after discovery.
+   - The AI panel shows candidate counts by image type and blocks zero-result selections.
+   - Corrupt target images are rejected before AI ranking.
+

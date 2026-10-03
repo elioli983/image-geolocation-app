@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Image Geolocation Estimation App</title>
+  <link href="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.css" rel="stylesheet" />
+  <script src="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header>
+  <div>
+    <h1>Image Geolocation Estimation App <span class="version">v2.4</span></h1>
+    <p>Discover Mapillary imagery, compare it with a target photograph using AI visual similarity, and review likely geolocation matches.</p>
+  </div>
+  <div id="tokenBadge" class="badge muted">Checking token…</div>
+</header>
+
+<main>
+  <section class="panel controls">
+    <div class="search-head">
+      <h2>Search area</h2>
+      <label class="compact search-mode">Search mode
+        <select id="searchMode">
+          <option value="standard">Standard Search</option>
+          <option value="large">Large Area Search</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-grid">
+      <label>Center latitude<input id="centerLat" type="number" step="0.0000001" placeholder="Enter latitude"></label>
+      <label>Center longitude<input id="centerLng" type="number" step="0.0000001" placeholder="Enter longitude"></label>
+      <label id="standardRadiusLabel">Radius (meters)<input id="radiusM" type="number" min="1" max="1500" step="1" value="402.336"></label>
+      <label id="largeRadiusLabel" class="hidden">Overall radius (meters)<input id="largeRadiusM" type="number" min="1501" max="50000" step="100" value="10000"></label>
+      <label>Image type<select id="imageType"><option value="all">All imagery</option><option value="pano">Panoramas only</option><option value="flat">Flat images only</option></select></label>
+      <label>Captured on/after<input id="startCapturedAt" type="date"></label>
+      <label>Captured on/before<input id="endCapturedAt" type="date"></label>
+      <label id="maxApiLabel">Maximum API images<input id="maxApiImages" type="number" min="1" step="100" value="20000"></label>
+    </div>
+    <div id="standardSearchActions">
+      <div class="button-row">
+        <button id="discoverBtn" class="primary">Discover Mapillary images</button>
+        <span id="discoverStatus" class="status">Ready.</span>
+      </div>
+      <p class="hint">Standard Search is limited to a 1,500-meter radius. Use Large Area Search for larger areas.</p>
+    </div>
+
+    <div id="largeAreaPanel" class="large-area hidden">
+      <div class="large-area-create">
+        <label>Large Area Search job name<input id="largeJobName" type="text" placeholder="e.g. Denver full search"></label>
+        <div class="large-area-facts">
+          <span>Sub-search radius: <strong>1,500 m</strong></span>
+          <span>Center spacing: <strong>2,450 m</strong></span>
+          <span>Rows: <strong>~2,122 m</strong></span>
+        </div>
+      </div>
+      <div class="button-row">
+        <button id="largeStartBtn" class="primary">Start Large Area Search</button>
+        <span id="largeStatus" class="status">Ready.</span>
+      </div>
+      <p class="hint">The app creates overlapping 1,500 m cells, searches them sequentially, deduplicates Mapillary image IDs globally, and saves progress after every cell.</p>
+
+      <div class="large-job-controls">
+        <label>Saved Large Area Search jobs
+          <select id="largeJobs"><option value="">No Large Area Search jobs</option></select>
+        </label>
+        <div class="button-row compact-row">
+          <button id="largePauseBtn" disabled>Pause</button>
+          <button id="largeCancelBtn" class="danger" disabled>Cancel</button>
+          <button id="largeResumeBtn" disabled>Resume</button>
+          <button id="largeRetryBtn" disabled>Retry failed cells</button>
+          <button id="largeLoadBtn" disabled>Load combined results</button>
+          <button id="largeDeleteBtn" class="danger" disabled>Delete job</button>
+        </div>
+      </div>
+      <div class="large-progress-wrap">
+        <progress id="largeProgress" value="0" max="1"></progress>
+        <span id="largeProgressText">No job selected.</span>
+      </div>
+      <div id="largeStats" class="large-stats"></div>
+      <div id="largeCellTable" class="large-cell-table hidden"></div>
+    </div>
+  </section>
+
+  <section class="panel saved-section">
+    <div class="saved-block">
+      <h2>Saved runs</h2>
+      <div class="inline-fields">
+        <input id="runName" type="text" placeholder="Run name, e.g. Convention Center 0.25 mi" />
+        <button id="saveRunBtn">Save current run</button>
+      </div>
+      <div class="inline-fields">
+        <select id="savedRuns"><option value="">No saved runs</option></select>
+        <button id="loadRunBtn">Load</button>
+        <button id="deleteRunBtn" class="danger">Delete</button>
+        <button id="exportRunBtn">Export current CSV</button>
+      </div>
+    </div>
+    <div class="saved-block">
+      <h2>Shortlist <span id="shortlistCount" class="count">0</span></h2>
+      <div class="inline-fields">
+        <button id="loadShortlistBtn">Load shortlist</button>
+        <button id="exportShortlistBtn">Export shortlist CSV</button>
+        <button id="clearShortlistBtn" class="danger">Clear shortlist</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel ai-section">
+    <div class="ai-head">
+      <div>
+        <h2>AI visual similarity ranking <span class="version">DINOv2</span></h2>
+        <p class="hint">Compare the target image against Mapillary thumbnails and rank the current run by visual similarity. Fast mode searches full images plus portrait-oriented slices; Thorough mode adds multiple crop scales.</p>
+      </div>
+      <span id="aiReadyBadge" class="badge muted">AI not checked</span>
+    </div>
+    <div class="form-grid ai-grid">
+      <label>Comparison mode
+        <select id="aiMode"><option value="fast">Fast multi-crop</option><option value="thorough">Thorough multi-crop</option></select>
+      </label>
+      <label>AI image type
+        <select id="aiImageType">
+          <option value="all">Both panorama and flat images</option>
+          <option value="pano">Panoramas only</option>
+          <option value="flat">Flat images only</option>
+        </select>
+      </label>
+      <label>Mapillary thumbnail
+        <select id="aiThumbSize"><option value="1024">1024 px (recommended)</option><option value="2048">2048 px</option></select>
+      </label>
+      <label>Compute device
+        <select id="aiDevice">
+          <option value="auto">Auto (recommended)</option>
+          <option value="cpu">CPU (all available threads)</option>
+          <option value="rocm">AMD ROCm GPU</option>
+          <option value="cuda">NVIDIA CUDA GPU</option>
+          <option value="directml">DirectML GPU (Windows fallback)</option>
+          <option value="mps">Apple MPS</option>
+        </select>
+      </label>
+      <label>Maximum images to score
+        <input id="aiMaxImages" type="number" min="0" step="100" value="0" title="0 means all images in the current run">
+      </label>
+    </div>
+    <p id="aiImageTypeSummary" class="hint ai-filter-summary">Current candidate set: 0 images.</p>
+    <label class="checkline"><input id="aiKeepCache" type="checkbox" checked> Keep downloaded Mapillary thumbnails in <code>ai_cache</code> for faster repeat runs</label>
+    <p class="hint">Auto prefers an AMD ROCm or NVIDIA CUDA GPU when available, then Apple MPS or DirectML, and otherwise uses the CPU. CPU mode uses all available PyTorch CPU threads.</p>
+    <div class="button-row">
+      <button id="aiCheckBtn">Check AI environment</button>
+      <button id="aiRankBtn" class="primary">Rank current run with AI</button>
+      <button id="aiCancelBtn" class="danger" disabled>Cancel AI run</button>
+      <button id="aiSortBtn">Sort by AI similarity</button>
+      <button id="distanceSortBtn">Restore distance order</button>
+      <button id="aiClearCacheBtn">Clear AI thumbnail cache</button>
+      <span id="orderStatus" class="status">Order: distance from center (nearest first)</span>
+    </div>
+    <div class="ai-progress-wrap"><progress id="aiProgress" value="0" max="1"></progress><span id="aiProgressText">Ready.</span></div>
+    <div id="aiStatus" class="status">Install the optional AI requirements before the first AI ranking run.</div>
+    <div id="aiTop" class="ai-top hidden"></div>
+  </section>
+
+  <section class="review-grid">
+    <article class="panel viewer-card">
+      <div class="card-head target-head">
+        <div><h2>Target photograph</h2><span id="targetName">No target image selected</span></div>
+        <div class="target-actions">
+          <input id="targetFile" type="file" accept="image/jpeg,image/png,image/webp" />
+          <button id="uploadTargetBtn">Use selected target</button>
+        </div>
+      </div>
+      <div id="targetStage">
+        <div id="targetPlaceholder" class="target-placeholder">Choose a JPEG, PNG, or WebP target image from this computer/device.</div>
+        <a id="targetLink" class="hidden" href="#" target="_blank" rel="noopener"><img id="targetImage" alt="Target photograph"></a>
+      </div>
+      <div id="targetStatus" class="target-status">No target image uploaded.</div>
+    </article>
+
+    <article class="panel viewer-card">
+      <div class="card-head viewer-head">
+        <div><h2>Mapillary candidate</h2><span id="candidateCounter">No run loaded</span></div>
+        <label class="compact">Viewer
+          <select id="viewerMode"><option value="mapillaryjs">MapillaryJS interactive</option><option value="thumbnail">2048 px thumbnail</option></select>
+        </label>
+      </div>
+      <div id="viewerWrap">
+        <div id="mlyViewer"></div>
+        <div id="thumbViewer" class="hidden"><div id="thumbStatus">Select an image.</div><img id="thumbImage" alt="Mapillary candidate thumbnail"></div>
+      </div>
+      <div class="button-row review-buttons">
+        <button id="prevBtn">◀ Previous</button>
+        <label class="jump"># <input id="jumpInput" type="number" min="1" value="1"></label>
+        <button id="jumpBtn">Go</button>
+        <button id="nextBtn">Next ▶</button>
+        <button id="shortlistBtn">Add to shortlist</button>
+        <button id="openMapillaryBtn">Open in Mapillary</button>
+        <button id="copyIdBtn">Copy ID</button>
+      </div>
+    </article>
+  </section>
+
+  <section class="panel metadata-panel">
+    <div class="meta-top">
+      <h2>Current image</h2>
+      <span class="mapillary-credit">Imagery/data © <a href="https://www.mapillary.com" target="_blank" rel="noopener">Mapillary</a></span>
+    </div>
+    <div id="metadata" class="metadata-grid"><div class="empty">Discover or load a run to begin.</div></div>
+  </section>
+</main>
+
+<footer>Local reviewer · database: <code>mapillary_runs.sqlite3</code></footer>
+<script src="app.js"></script>
+</body>
+</html>

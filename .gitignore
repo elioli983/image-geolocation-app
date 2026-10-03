@@ -1,0 +1,17 @@
+# Your personal Mapillary token lives here — never upload it.
+# (config.example.json shows the format.)
+config.json
+
+# Data the app creates while running
+mapillary_runs.sqlite3*
+ai_cache/
+target_uploads/
+
+# Python leftovers
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Packaged copies
+*.zip

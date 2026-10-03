@@ -1,0 +1,8 @@
+# On AMD ROCm systems, install AMD's ROCm-enabled torch/torchvision build first.
+# If those packages satisfy these minimums, pip should keep the installed ROCm build.
+Pillow>=10
+numpy>=1.26
+torch>=2.2
+torchvision>=0.17
+transformers>=4.40
+safetensors>=0.4
